@@ -98,7 +98,7 @@ public class Deque<Item> implements Iterable<Item> {
             throw new java.util.NoSuchElementException();
         }
         Item item = last.item;
-        if ( last.previous == null){
+        if (last.previous == null) {
             last = null;
             first = null;
         } else {
@@ -111,15 +111,18 @@ public class Deque<Item> implements Iterable<Item> {
 
     // return an iterator over items in order from front to back
     public Iterator<Item> iterator() {
-        return new ListIterator();
+        return new ListIterator(first);
     }
     private class ListIterator implements Iterator<Item>
     {
-        private Node current = first;
+        private Node current;
+        public ListIterator(Node initialNode) {
+            current = initialNode;
+        }
         public boolean hasNext() {  return current != null;  }
         public void remove()     { throw new UnsupportedOperationException(); }
         public Item next() {
-            if (current.next == null) { throw new java.util.NoSuchElementException(); }
+            if (current == null) { throw new java.util.NoSuchElementException(); }
             Item item = current.item;
             current = current.next;
             return item; }
@@ -131,13 +134,10 @@ public class Deque<Item> implements Iterable<Item> {
     prescribed (e.g., by printing results to standard output).*/
     public static void main(String[] args) {
         Deque<Integer> deque = new Deque<>();
-        // missing type arguments for generic class Deque<Item>
-        //   where Item is a type-variable:
         System.out.println(deque.isEmpty());
         System.out.println(deque.size());
         deque.removeLast();
         deque.removeFirst();
-
     }
 
 }
