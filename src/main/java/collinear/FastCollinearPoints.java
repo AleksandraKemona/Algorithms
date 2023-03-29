@@ -19,35 +19,48 @@ public class FastCollinearPoints {
         checkForNull(points);
         ArrayList<LineSegment> collinearSegments = new ArrayList<>();
         Point[] duplicateArray = Arrays.copyOf(points, points.length);
-        ArrayList<SlopeAssignment> slopeAssignments = new ArrayList<>();
-        SlopeAssignment[] slopesArray;
-        for (int p = 0; p < points.length-1; p++) {
-            for (int q = p+1; q < points.length; q++) {
-                double slope = duplicateArray[p].slopeTo(duplicateArray[q]);
-                slopeAssignments.add(new SlopeAssignment(duplicateArray[q], slope));
-            }
-            slopesArray = slopeAssignments.toArray(new SlopeAssignment[slopeAssignments.size()]);
-            Arrays.sort(slopesArray);
-            for (int i = 0; i < slopesArray.length; i++) {
-                ArrayList<Point> segment = new ArrayList<>();
-                double slopeI = slopesArray[i].slope;
-                segment.add(slopesArray[i].point);
-                for (int j = 0; j < slopesArray.length; j++) {
-                    double slopeJ = slopesArray[j].slope;
-                    if (slopeJ == slopeI) {
-                        segment.add(slopesArray[j].point);
-                    } else if (segment.size() >= 4) {
-                        Point[] sortedSegment = segment.toArray(new Point[segment.size()+1]);
-                        Arrays.sort(sortedSegment);
-                        collinearSegments.add(new LineSegment(sortedSegment[0], sortedSegment[sortedSegment.length]));
-                    }
-                }
 
+
+        for (int p = 0; p < points.length-1; p++) {
+            for (int q = p+1; q > 0; q--) {
+                double slope1 = duplicateArray[p].slopeTo(duplicateArray[q]);
+                double slope2 = duplicateArray[p].slopeTo(duplicateArray[q-1]);
+                if(less(slope1, slope2)){
+                    exch(duplicateArray, q, q-1);
+                } else {
+                    break;
+                }
+            }
+        }
+        for (int p = 0; p < points.length; p++) {
+            int startingPoint = 0;
+            int endingPoint = 1;
+            for (int q = p+1; q < points.length; q++){
+                double slope1 = duplicateArray[p].slopeTo(duplicateArray[q]);
+                double slope2 = duplicateArray[p].slopeTo(duplicateArray[q-1]);
+                if (slope1 == slope2 || slope2 == 0){
+                    endingPoint++;
+                } else {
+                    collinearSegments.add(new LineSegment(duplicateArray[startingPoint], duplicateArray[endingPoint]));
+                    startingPoint = endingPoint;
+                    endingPoint = startingPoint + 1;
+                }
             }
         }
 
         segments = collinearSegments.toArray(new LineSegment[collinearSegments.size()]);
     }
+
+    private static boolean less(Comparable v, Comparable w)
+    {  return v.compareTo(w) < 0;  }
+
+    private static void exch(Comparable[] a, int i, int j)
+    {  Comparable swap = a[i];
+        a[i] = a[j];
+        a[j] = swap;
+    }
+
+
 
     // the number of line segments
     public int numberOfSegments() {
@@ -71,32 +84,5 @@ public class FastCollinearPoints {
         }
     }
 
-    private class SlopeAssignment implements Comparable<SlopeAssignment> {
-        private final Point point;     // x-coordinate of this point
-        private final double slope;
-        public SlopeAssignment(Point point, double slope) {
-        this.point = point;
-        this.slope = slope;
-        }
 
-        @Override
-        public int compareTo(SlopeAssignment slopeAssignment) {
-            if ( slope <  slopeAssignment.slope) {
-                return -1;
-            } else if ((slope >  slopeAssignment.slope)) {
-                return +1;
-            } else {
-                return 0;
-            }
-        }
-        public Comparator<SlopeAssignment> slopeOrder() {
-            return new Comparator<SlopeAssignment>() {
-                @Override
-                public int compare(SlopeAssignment o1, SlopeAssignment o2) {
-                    double slopeTilt = o1.slope - o2.slope;
-                    return (int) Math.signum(slopeTilt);
-                }
-            };
-        }
-    }
 }
