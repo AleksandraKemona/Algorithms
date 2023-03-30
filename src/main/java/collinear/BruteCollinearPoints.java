@@ -62,11 +62,13 @@ public class BruteCollinearPoints {
         if (points == null) {
             throw new IllegalArgumentException("Argument to the constructor can't be null");
         }
+        for (int i = 0; i < points.length; i++) {
+            if (points[i] == null) {
+                throw new IllegalArgumentException("points can not be null");
+            }
+        }
         for (int r = 0; r < points.length -1; r++) {
             for (int s = r+1; s < points.length; s++) {
-                if (points[r] == null || points[s] == null) {
-                    throw new IllegalArgumentException("points can not be null");
-                }
                 if (points[r].compareTo(points[s]) == 0) {
                     throw new IllegalArgumentException("Duplicate points");
                 }

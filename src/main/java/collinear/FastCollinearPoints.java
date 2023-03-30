@@ -2,7 +2,6 @@
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 
 public class FastCollinearPoints {
 
@@ -19,43 +18,48 @@ public class FastCollinearPoints {
         checkForNull(points);
         ArrayList<LineSegment> collinearSegments = new ArrayList<>();
         Point[] duplicateArray = Arrays.copyOf(points, points.length);
+        Arrays.sort(duplicateArray);
 
-
+// Może dodać listę slopów?
+        ArrayList<Double> slopes = new ArrayList<Double>();
         for (int p = 0; p < points.length-1; p++) {
             for (int q = p+1; q > 0; q--) {
                 double slope1 = duplicateArray[p].slopeTo(duplicateArray[q]);
                 double slope2 = duplicateArray[p].slopeTo(duplicateArray[q-1]);
-                if(less(slope1, slope2)){
+                if (less(slope1, slope2)) {
                     exch(duplicateArray, q, q-1);
                 } else {
                     break;
                 }
             }
-        }
-        for (int p = 0; p < points.length; p++) {
-            int startingPoint = 0;
-            int endingPoint = 1;
-            for (int q = p+1; q < points.length; q++){
-                double slope1 = duplicateArray[p].slopeTo(duplicateArray[q]);
-                double slope2 = duplicateArray[p].slopeTo(duplicateArray[q-1]);
-                if (slope1 == slope2 || slope2 == 0){
-                    endingPoint++;
-                } else {
-                    collinearSegments.add(new LineSegment(duplicateArray[startingPoint], duplicateArray[endingPoint]));
-                    startingPoint = endingPoint;
-                    endingPoint = startingPoint + 1;
+            int q = 1;
+            Point pP = duplicateArray[0];
+            for (int i = 1; i < points.length-1; i++) {
+                ArrayList<Point> slopesSet = new ArrayList<Point>();
+                int r = q+1;
+                Point pQ = duplicateArray[q];
+                Point pR = duplicateArray[r];
+                slopesSet.add(pP);
+                int compared = pP.slopeOrder().compare(pQ, pR);
+                slopesSet.add(pQ);
+                q++;
+                if (compared > 0) {
+                    Point[] slopesArray = slopesSet.toArray(new Point[slopesSet.size()]);
+                    if (slopesSet.size() >= 4 && !slopes.contains(pP.slopeTo(pQ))){
+                        collinearSegments.add(new LineSegment(slopesArray[0], slopesArray[slopesSet.size()]));
+                    }
+                    slopes.add(pP.slopeTo(pQ));
                 }
             }
         }
-
         segments = collinearSegments.toArray(new LineSegment[collinearSegments.size()]);
     }
 
-    private static boolean less(Comparable v, Comparable w)
+    private static boolean less(Double v, Double w)
     {  return v.compareTo(w) < 0;  }
 
-    private static void exch(Comparable[] a, int i, int j)
-    {  Comparable swap = a[i];
+    private static void exch(Point[] a, int i, int j)
+    {  Point swap = a[i];
         a[i] = a[j];
         a[j] = swap;
     }
