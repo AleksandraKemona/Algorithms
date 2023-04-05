@@ -85,8 +85,8 @@ public class Board {
             int goalX = goalIndex % n;
             int goalY = goalIndex / n;
             if (boardIndex != goalIndex) {
-                int vertDist = Math.abs(boardX - goalX);
-                int horizDist = Math.abs(boardY - goalY);
+                int horizDist = Math.abs(boardX - goalX);
+                int vertDist = Math.abs(boardY - goalY);
                 counter = counter + vertDist + horizDist;
             }
         }
@@ -98,18 +98,13 @@ public class Board {
         for (int i = 0; i < (n*n); i++) {
             goalArray.add(i, i+1);
         }
-        goalArray.add((n*n-1), 0);
+        goalArray.set((n*n-1), 0);
     }
 
     // is this board the goal board?
     public boolean isGoal() {
-        goalArray = new ArrayList<>();
-        createGoalBoard();
-        for (int i = 0; i < n * n; i++) {
-            if (boardArray.get(i) != goalArray.get(i)) return false;
-            }
-        return true;
-        }
+        return hamming() == 0;
+    }
 
 
 
@@ -145,46 +140,17 @@ public class Board {
         int col = blankPlate % n;
         int row = blankPlate / n;
 
-        int[] positions = {row - 1, row + 1, col + 1, col -1};
-        int[] moves = {-1, 1, 1, -1};
-        // for (int i = 0; i < 4; i++) {
-        //
-        //     int position = positions[i];
-        //     int move = moves[i];
-        //     if (position >= 0 && position < n){
-        //         int index = blankPlate + move;
-        //         oneNeighbour.set(blankPlate, boardArray.get(index));
-        //         oneNeighbour.set(index, 0);
-        //         neighbors.enqueue(new Board(arrayListToArray(oneNeighbour)));
-        //     }
-        // }
-        if(positions[0] >=0 && positions[0] <n){
-            int[][] neighbour0 = copyArray(startingArray);
-            neighbour0[row][col] = startingArray[row + moves[0]][col];
-            neighbour0[row + moves[0]][col] = 0;
-            ArrayList<Integer> oneNeighbour0 = arrayToArrayList(neighbour0);
-            neighbors.enqueue(new Board(arrayListToArray(oneNeighbour0)));
-        }
-        if(positions[1] >=0 && positions[1] <n){
-            int[][] neighbour1 = copyArray(startingArray);
-            neighbour1[row][col] = startingArray[row + moves[1]][col];
-            neighbour1[row + moves[1]][col] = 0;
-            ArrayList<Integer> oneNeighbour1 = arrayToArrayList(neighbour1);
-            neighbors.enqueue(new Board(arrayListToArray(oneNeighbour1)));
-        }
-        if(positions[2] >=0 && positions[2] <n) {
-            int[][] neighbour2 = copyArray(startingArray);
-            neighbour2[row][col] = startingArray[row][col+ moves[2]];
-            neighbour2[row][col + moves[2]] = 0;
-            ArrayList<Integer> oneNeighbour2 = arrayToArrayList(neighbour2);
-            neighbors.enqueue(new Board(arrayListToArray(oneNeighbour2)));
-        }
-        if(positions[3] >=0 && positions[3] <n) {
-            int[][] neighbour3 = copyArray(startingArray);
-            neighbour3[row][col] = startingArray[row][col + moves[3]];
-            neighbour3[row][col + moves[3]] = 0;
-            ArrayList<Integer> oneNeighbour3 = arrayToArrayList(neighbour3);
-            neighbors.enqueue(new Board(arrayListToArray(oneNeighbour3)));
+        int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
+        for (int[] move: moves) {
+            int newCol = col + move[0];
+            int newRow = row + move[1];
+            if (isInRange(newRow, newCol)) {
+                int[][] neighbour = copyArray(startingArray);
+                neighbour[row][col] = startingArray[newRow][newCol];
+                neighbour[newRow][newCol] = 0;
+                ArrayList<Integer> oneNeighbour0 = arrayToArrayList(neighbour);
+                neighbors.enqueue(new Board(arrayListToArray(oneNeighbour0)));
+            }
         }
         return neighbors;
     }
@@ -192,19 +158,39 @@ public class Board {
 
     // a board that is obtained by exchanging any pair of tiles
     public Board twin() {
-        int[][] twinBoard = new int[n][n];
-        for (int i = 0; i < n; i++){
-            for (int j = 0; j < n; j++){
-                twinBoard[i][j] = boardArray.get(i * n + j);
+        int[][] startingArray = arrayListToArray(boardArray);
+        ArrayList<Integer> startingList = arrayToArrayList(startingArray);
+        Board twinBoard = new Board(copyArray(startingArray));
+
+        int[] twinArray = new int[startingList.size()];
+        for (int i = 0; i < startingList.size(); i++){
+            twinArray[i] = startingList.get(i);
+        }
+
+        for (int i = 0; i < startingList.size(); i++){
+
+            if (twinArray[i] !=0){
+                int col = i % n;
+                int row = i / n;
+                int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
+                for (int[] move: moves) {
+                    int newCol = col+move[0];
+                    int newRow = row+move[1];
+                    if(isInRange(newRow, newCol)){
+                        int[][] testBoard = copyArray(startingArray);
+                        if (testBoard[newRow][newCol] !=0 ){
+                            int temp = testBoard[row][col];
+                            testBoard[row][col] = testBoard[newRow][newCol];
+                            testBoard[newRow][newCol] = temp;
+                            twinBoard = new Board(testBoard);
+                        }
+                    }
+                }
             }
         }
-        int random1x = StdRandom.uniformInt(0, boardArray.size());
-        int random2x = StdRandom.uniformInt(0, boardArray.size());
-        int random1y = StdRandom.uniformInt(0, boardArray.size());
-        int random2y = StdRandom.uniformInt(0, boardArray.size());
-        twinBoard[random1x][random1y] = boardArray.get(random2x*random2y);
-        twinBoard[random2x][random2y] = boardArray.get(random1x*random1y);
-        return new Board(twinBoard);
+        return twinBoard;
+
+
     }
 
     private ArrayList<Integer> arrayToArrayList(int[][] tiles) {
@@ -235,6 +221,9 @@ public class Board {
             }
         }
         return newArray;
+    }
+    private boolean isInRange(int col, int row){
+        return (col >=0 && col <n && row >=0 && row <n);
     }
 
     // unit testing (not graded)
