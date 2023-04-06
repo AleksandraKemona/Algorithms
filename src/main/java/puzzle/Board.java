@@ -1,10 +1,8 @@
 // package puzzle;
 
 import edu.princeton.cs.algs4.Queue;
-import edu.princeton.cs.algs4.StdRandom;
-
 import java.util.ArrayList;
-import java.util.List;
+
 
 public class Board {
 
@@ -13,7 +11,7 @@ public class Board {
     private Board board;
     private ArrayList<Integer> boardArray;
     private ArrayList<Integer> goalArray;
-    private Iterable<Board> neighbourBoards;
+
 
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
@@ -22,7 +20,6 @@ public class Board {
     // containing the n2 integers between 0 and n2 − 1, where 0 represents the blank square.
     // You may also assume that 2 ≤ n < 128.
     public Board(int[][] tiles) {
-
         this.n = tiles.length;
         this.boardArray = arrayToArrayList(tiles);
     }
@@ -32,25 +29,20 @@ public class Board {
     // The first line contains the board size n; the remaining n lines contains
     // the n-by-n grid of tiles in row-major order, using 0 to designate the blank square.
     public String toString(){
-        int size = dimension();
-        String boardSize = size + "\n";
-        String boardString = "";
         StringBuilder boardBuilder = new StringBuilder();
+        boardBuilder.append( n + "\n");
         for (int i = 0; i < n; i++) {
-            String line = "";
-            StringBuilder lineBuilder = new StringBuilder();
             for (int j = 0; j < n; j++) {
-                int number = boardArray.get(i * n + j);
-                lineBuilder.append(" " + number + " ");
+                    boardBuilder.append(" " + boardArray.get(i * n + j) + " ");
+                }
+                boardBuilder.append("\n");
             }
-            lineBuilder.append("\n");
-            line = lineBuilder.toString();
-            boardBuilder.append(line);
-        }
-        boardString = boardBuilder.toString();
-        return boardSize + boardString;
-
+        return boardBuilder.toString();
     }
+
+
+
+
 
     // board dimension n
     public int dimension() {
@@ -103,7 +95,13 @@ public class Board {
 
     // is this board the goal board?
     public boolean isGoal() {
-        return hamming() == 0;
+        // return hamming() == 0;
+        for (int i = 0; i < n*n - 1; i++) {
+            if (boardArray.get(i) != (i + 1)) {
+               return false;
+            }
+        }
+        return true;
     }
 
 
