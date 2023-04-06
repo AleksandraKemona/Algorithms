@@ -5,6 +5,9 @@ import edu.princeton.cs.algs4.MinPQ;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
+import java.util.ArrayList;
+
+
 public class Solver {
     // A* search. Now, we describe a solution to the 8-puzzle problem
     // that illustrates a general artificial intelligence methodology known as the A* search algorithm.
@@ -59,66 +62,184 @@ public class Solver {
     // board modified by swapping a pair of tiles—in lockstep (alternating back and forth between exploring
     // search nodes in each of the two game trees). Exactly one of the two will lead to the goal board.
     private Board board;
-    private Solver parent;
-    private Solver smaller;
-    private Solver larger;
-    private Iterable<Board> solution;
+    private boolean solvable;
+
+    private boolean solved = false;
+    private boolean twinSolved = false;
+
+    // private boolean solvable;
+    private int minMoves;
+    // private Iterable<Board> solution;
+
+    private Node minNode;
+
 
     public Solver(Board initial){
-        this(initial, null, null);
-        MinPQ<Board> node = new MinPQ<Board>();
-
-    }
-
-
-    private  Solver(Board initial, Solver smaller, Solver larger){
-        this.board = initial;
-        this.smaller = smaller;
-        this.larger = larger;
-        if(smaller != null){
-            this.parent = smaller;
-        }
-        if (larger != null){
-            this.parent = larger;
-        }
-    }
-
-    // is the initial board solvable? (see below)
-    public boolean isSolvable(){
-        return moves() != -1;
-    }
-
-    // min number of moves to solve initial board; -1 if unsolvable
-    public int moves(){
-        return board.manhattan();
-
-    }
-
-    // sequence of boards in a shortest solution; null if unsolvable
-    public Iterable<Board> solution(){
-        Queue<Board> boards = new Queue<>();
-        if (!isSolvable()){
-            solution = null;
-        } else {
-            solution = boards;
+        if (initial == null) {
+            throw new java.lang.IllegalArgumentException();
         }
 
-        return solution;
+        int moves = 0;
+        // int twinMoves = 0;
+
+        MinPQ<Node> nodes = new MinPQ<>();
+        MinPQ<Node> twinNodes = new MinPQ<>();
+
+        Node searchNode = new Node(initial);
+        Node twinSearchNode = new Node(initial.twin());
+
+        nodes.insert(searchNode);
+        twinNodes.insert(twinSearchNode);
+
+
+        Node removedNode;
+        Node removedTwinNode;
+
+        while (!solved && !twinSolved){
+            removedNode = nodes.delMin();
+            Node predecessor = removedNode.getPredecessor();
+            Board currentBoard = removedNode.getBoard();
+
+            removedTwinNode = twinNodes.delMin();
+            Node twinPredecessor = removedTwinNode.getPredecessor();
+            Board currentTwinBoard = removedTwinNode.getBoard();
+
+            if (currentBoard.isGoal()){
+                solved = true;
+            }
+
+            if (currentTwinBoard.isGoal()){
+                twinSolved = true;
+            }
+
+            Node neighbourNode = getNeighbour(removedNode);
+            nodes.insert(neighbourNode);
+
+
+            Node twinNeighbourNode = getNeighbour(removedTwinNode);
+            twinNodes.insert(twinNeighbourNode);
+
+
+            moves = removedNode.getMoves() + 1;
+            // twinMoves = removedTwinNode.getMoves() +1;
+            minNode = removedNode;
+
+            if (moves > (currentBoard.dimension() * currentBoard.dimension() * 3)){
+                solvable = false;
+                break;
+            } else {
+                solvable = !twinSolved;
+            }
+
+        }
+
+        // System.out.println("Is it solvable? " + solvable);
+        minMoves = moves - 1;
     }
 
+    // public Solver(Board initial) {
+    //     if (initial == null)
+    //         throw new java.lang.IllegalArgumentException();
+    //     //minMoves = initial.manhattan();
+    //     int moves = 0;
+    //     int twinMoves = 0;
+    //
+    //     Queue<Board> neighbors;
+    //     Queue<Board> twinNeighbors = new Queue<Board>();
+    //
+    //     MinPQ<Node> searchNodes = new MinPQ<Node>();
+    //     MinPQ<Node> twinNodes = new MinPQ<Node>();
+    //
+    //     Node searchNode = new Node(initial, moves, null);
+    //     Node twinSearchNode = new Node(initial.twin(), twinMoves, null);
+    //
+    //     twinNodes.insert(twinSearchNode);
+    //     searchNodes.insert(searchNode);
+    //
+    //     boolean solved = false;
+    //     boolean twinSolved = false;
+    //     // System.out.println("Get Board: " + searchNodes.delMin().getBoard());
+    //     Node current = null;
+    //
+    //     while (!solved) {
+    //         current = searchNodes.delMin();
+    //         Node twinCurrent = twinNodes.delMin();
+    //         Node twinPredecessor = twinCurrent.getPredecessor();
+    //         Board twinTemp = twinCurrent.getBoard();
+    //         twinSolved = twinTemp.isGoal();
+    //
+    //         // System.out.println("current before get Neighbour: \n" + current);
+    //
+    //             Node neighbourNode = getNeighbour(current);
+    //             // System.out.println("neighbour node: \n " + neighborNode.getBoard());
+    //             solved = neighbourNode.getBoard().isGoal();
+    //         // System.out.println("serch nodes 1: " + searchNodes.size());
+    //         // System.out.println("Neighbour node before insert to serch \n" + neighbourNode.getBoard());
+    //             searchNodes.insert(neighbourNode);
+    //         // System.out.println("serch nodes: " + searchNodes.size());
+    //
+    //
+    //
+    //         for (Board b : twinTemp.neighbors())
+    //             twinNeighbors.enqueue(b);
+    //
+    //
+    //
+    //
+    //         while(twinNeighbors.size() > 0) {
+    //             Board board = twinNeighbors.dequeue();
+    //
+    //             int twinMove = current.getMoves();
+    //             twinMove++;
+    //             if (twinPredecessor != null && twinPredecessor.getBoard().equals(board))
+    //                 continue;
+    //
+    //             Node neighborTwinNode = new Node(board, twinMove, twinCurrent);
+    //             twinNodes.insert(neighborTwinNode);
+    //         }
+    //
+    //         moves = current.getMoves() + 1;
+    //         twinMoves = twinCurrent.getMoves() + 1;
+    //         minNode = current;
+    //     }
+    //
+    //     solvable = !twinSolved;
+    //     minMoves = moves - 1;
+    // }
 
-
-
+    // private void printBoard(Board board){
+    //     int n = 3;
+    //     int[][] testBoard =
+    //     for (int x = 0; x < n; x++){
+    //         for (int j = 0; j < n; j++){
+    //             System.out.print(testBoard[x][j] +" ");
+    //         }
+    //         System.out.println();
+    //     }
+    // }
 
     // test client (see below)
     public static void main(String[] args){
+        // ArrayList<Integer> list = new ArrayList<>();
+        // list.add(1);
+        // list.add(2);
+        // list.add(3);
+        // list.add(4);
+        // list.add(6);
+        // list.add(5);
+        // list.add(7);
+        // list.add(8);
+        // list.add(0);
         // create initial board from file
         In in = new In(args[0]);
         int n = in.readInt();
+        // int n = 3;
         int[][] tiles = new int[n][n];
         for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < n; j++) {
+                // tiles[i][j] = list.get(i * n + j);
                 tiles[i][j] = in.readInt();
+            }
         Board initial = new Board(tiles);
 
         // solve the puzzle
@@ -132,6 +253,211 @@ public class Solver {
             for (Board board : solver.solution())
                 StdOut.println(board);
         }
+    }
+
+    private Node getNeighbour(Node currentNode) {
+        Board[] neighbours = new Board[4];
+        Board centerBoard = currentNode.board;
+        Node predecessor = currentNode.getPredecessor();
+        int moves = currentNode.getMoves();
+
+        int counter = 0;
+        for (Board b : centerBoard.neighbors()) {
+            if (predecessor != null){
+                if (!predecessor.getBoard().equals(b)){
+                    neighbours[counter] = b;
+                    counter++;
+                }
+            } else {
+                neighbours[counter] = b;
+                counter++;
+            }
+        }
+        Board bestBoard = centerBoard;
+        int currentPriority = (centerBoard.manhattan());
+
+        for (int i = 0; i < neighbours.length; i++) {
+            Board board = neighbours[i];
+            if (board != null){
+            int priority = board.manhattan();
+            if (priority < currentPriority) {
+                bestBoard = board;
+                currentPriority = priority;
+            }
+            }
+        }
+        moves++;
+        // System.out.println("current node moves: " + currentNode.getMoves());
+        Node bestNode = new Node(bestBoard, moves, currentNode);
+        return bestNode;
+    }
+
+    // is the initial board solvable? (see below)
+    public boolean isSolvable(){
+        return solvable;
+    }
+
+    // min number of moves to solve initial board; -1 if unsolvable
+    public int moves(){
+        if(isSolvable()) {
+            return minMoves;
+        } else {
+            return -1;
+        }
+
+
+    }
+
+    // sequence of boards in the shortest solution; null if unsolvable
+    public Iterable<Board> solution(){
+        Queue<Board> boards = new Queue<>();
+        Node minNode = this.minNode;
+        if(this.isSolvable()) {
+            while (minNode.getPredecessor() != null) {
+                boards.enqueue(minNode.getBoard());
+                minNode = minNode.getPredecessor();
+            }
+            boards.enqueue(minNode.getBoard());
+            return boards;
+        } else {
+            return null;
+        }
+    }
+
+    private class Node implements Comparable<Node>{
+        private Board board;
+        private Node parent;
+        private Node smaller;
+        private Node larger;
+
+        private Node predecessor;
+        private int moves;
+        private int priority;
+
+        public Node(Board initial) {
+            this(initial, 0, null);
+        }
+
+        public Node(Board b, int m, Node pred) {
+            this.board = b;
+            this.moves = m;
+            this.predecessor = pred;
+
+            this.priority = m + board.manhattan();
+        }
+
+        public Board getBoard() {
+            return board;
+        }
+        // public int getPriority() {
+        //     return priority;
+        // }
+
+        public int getMoves() {
+            return moves;
+        }
+
+        // public Node getParent() {
+        //     return parent;
+        // }
+
+        // public void setParent(Node p) {
+        //     parent = p;
+        // }
+
+        // public Node getSmaller() {
+        //     return smaller;
+        // }
+        //
+        // public Node getLarger() {
+        //     return larger;
+        // }
+
+        // public boolean isSmaller() {
+        //     return getParent() != null && this == getParent().getSmaller();
+        // }
+        //
+        // public boolean isLarger() {
+        //     return getParent() != null && this == getParent().getLarger();
+        // }
+
+        // public Node minimum() {
+        //     Node node = this;
+        //     while (node.getSmaller() != null) {
+        //         node = node.getSmaller();
+        //     }
+        //     return node;
+        // }
+        //
+        // public Node maximum() {
+        //     Node node = this;
+        //     while (node.getLarger() != null) {
+        //         node = node.getLarger();
+        //     }
+        //     return node;
+        // }
+
+        // public Node successor() {
+        //     if (getLarger() != null) {
+        //         return getLarger().minimum();
+        //     }
+        //     Node node = this;
+        //     while (node.isLarger()) {
+        //         node = node.getParent();
+        //     }
+        //     return node.getParent();
+        // }
+
+        public Node getPredecessor() {
+            return predecessor;
+            // if (getSmaller() != null) {
+            //     return getSmaller().maximum();
+            // }
+            // Node node = this;
+            // while (node.isSmaller()) {
+            //     node = node.getParent();
+            // }
+            // return node.getParent();
+        }
+
+        @Override
+        public int compareTo(Node o) {
+            return this.priority - o.priority;
+        }
+
+        // public int size() {
+        //     return size(this);
+        // }
+
+        // public boolean equals(Object object) {
+        //     if (this == object) {
+        //         return true;
+        //     }
+        //     if (object == null || object.getClass() != getClass()) {
+        //         return false;
+        //     }
+        //     Node other = (Node) object;
+        //     return this.board.equals(other.board)
+        //             && equalsSmaller(other.getSmaller())
+        //             && equalsLarger(other.getLarger());
+        // }
+
+        // private int size(Node node) {
+        //     if (node == null) {
+        //         return 0;
+        //     }
+        //     return 1 + size(node.getSmaller()) + size(node.getLarger());
+        // }
+
+        // private boolean equalsSmaller(Node other) {
+        //     return getSmaller() == null && other == null
+        //             || getSmaller() != null && getSmaller().equals(other);
+        // }
+
+        // private boolean equalsLarger(Node other) {
+        //     return getLarger() == null && other == null
+        //             || getLarger() != null && getLarger().equals(other);
+        // }
     }
 
  /*   Corner cases.
