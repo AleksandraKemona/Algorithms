@@ -1,11 +1,14 @@
 // package puzzle;
 
+
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
-import edu.princeton.cs.algs4.Queue;
+// import edu.princeton.cs.algs4.Queue;
+import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class Solver {
@@ -65,7 +68,8 @@ public class Solver {
     private boolean solvable;
 
     private boolean solved = false;
-    private boolean twinSolved = false;
+    // private ArrayList<Board> usedBoards = new ArrayList<>();
+
 
     // private boolean solvable;
     private int minMoves;
@@ -74,7 +78,7 @@ public class Solver {
     private Node minNode;
 
 
-    public Solver(Board initial){
+    public Solver(Board initial) {
         if (initial == null) {
             throw new java.lang.IllegalArgumentException();
         }
@@ -83,57 +87,74 @@ public class Solver {
         // int twinMoves = 0;
 
         MinPQ<Node> nodes = new MinPQ<>();
-        MinPQ<Node> twinNodes = new MinPQ<>();
+        // MinPQ<Node> twinNodes = new MinPQ<>();
 
         Node searchNode = new Node(initial);
-        Node twinSearchNode = new Node(initial.twin());
-
         nodes.insert(searchNode);
-        twinNodes.insert(twinSearchNode);
+
+        // Node twinSearchNode = new Node(initial.twin());
+        // twinNodes.insert(twinSearchNode);
 
 
         Node removedNode;
         Node removedTwinNode;
 
-        while (!solved && !twinSolved){
+        while (!solved && (moves < (initial.dimension() * initial.dimension() * initial.dimension() * initial.dimension() + 2))) {
+            // System.out.println("moves " + moves);
             removedNode = nodes.delMin();
-            Node predecessor = removedNode.getPredecessor();
             Board currentBoard = removedNode.getBoard();
+            // while (!(moves > currentBoard.dimension() * currentBoard.dimension())) {
+            //     currentBoard = removedNode.getBoard().twin();
+            //     System.out.println("current twin \n" + currentBoard);
+            //     solvable = false;
+            //     moves = 0;
+            // }
 
-            removedTwinNode = twinNodes.delMin();
-            Node twinPredecessor = removedTwinNode.getPredecessor();
-            Board currentTwinBoard = removedTwinNode.getBoard();
 
-            if (currentBoard.isGoal()){
+            // removedTwinNode = twinNodes.delMin();
+            // Node twinPredecessor = removedTwinNode.getPredecessor();
+
+            // Board currentTwinBoard = removedTwinNode.getBoard();
+
+            // System.out.println(" Twin board: " + currentTwinBoard);
+
+            if (currentBoard.isGoal()) {
                 solved = true;
             }
 
-            if (currentTwinBoard.isGoal()){
-                twinSolved = true;
-            }
+            // if (currentTwinBoard.isGoal()){
+            //     twinSolved = true;
+            // }
 
             Node neighbourNode = getNeighbour(removedNode);
             nodes.insert(neighbourNode);
 
 
-            Node twinNeighbourNode = getNeighbour(removedTwinNode);
-            twinNodes.insert(twinNeighbourNode);
+            // Node twinNeighbourNode = getNeighbour(removedTwinNode);
+            // twinNodes.insert(twinNeighbourNode);
 
 
             moves = removedNode.getMoves() + 1;
+
             // twinMoves = removedTwinNode.getMoves() +1;
             minNode = removedNode;
+            // System.out.println("Moves " + moves);
+            // System.out.println("twin is goal ?" + currentTwinBoard.isGoal());
+            // if (moves > (currentBoard.dimension() * currentBoard.dimension() * 3)){
+            //     solvable = false;
+            //     break;
+            // } else {
 
-            if (moves > (currentBoard.dimension() * currentBoard.dimension() * 3)){
-                solvable = false;
-                break;
-            } else {
-                solvable = !twinSolved;
+            // }
+            if (moves == (currentBoard.dimension() * currentBoard.dimension() * currentBoard.dimension() * currentBoard.dimension())) {
+                solved = false;
             }
+
 
         }
 
         // System.out.println("Is it solvable? " + solvable);
+        solvable = solved;
         minMoves = moves - 1;
     }
 
@@ -219,17 +240,17 @@ public class Solver {
     // }
 
     // test client (see below)
-    public static void main(String[] args){
+    public static void main(String[] args) {
         // ArrayList<Integer> list = new ArrayList<>();
-        // list.add(1);
         // list.add(2);
         // list.add(3);
-        // list.add(4);
-        // list.add(6);
         // list.add(5);
+        // list.add(1);
+        // list.add(0);
+        // list.add(4);
         // list.add(7);
         // list.add(8);
-        // list.add(0);
+        // list.add(6);
         // create initial board from file
         In in = new In(args[0]);
         int n = in.readInt();
@@ -256,50 +277,79 @@ public class Solver {
     }
 
     private Node getNeighbour(Node currentNode) {
-        Board[] neighbours = new Board[4];
-        Board centerBoard = currentNode.board;
+        ArrayList<Board> listOfNeighbours = new ArrayList<>();
+        Board centerBoard = currentNode.getBoard();
+        // System.out.println("center board " + centerBoard);
         Node predecessor = currentNode.getPredecessor();
         int moves = currentNode.getMoves();
-
-        int counter = 0;
+        // System.out.println("centerboard " + centerBoard);
         for (Board b : centerBoard.neighbors()) {
-            if (predecessor != null){
-                if (!predecessor.getBoard().equals(b)){
-                    neighbours[counter] = b;
-                    counter++;
-                }
-            } else {
-                neighbours[counter] = b;
-                counter++;
+            // System.out.println("for loop");
+            if (predecessor != null && !predecessor.getBoard().equals(b)) {
+                listOfNeighbours.add(b);
+            } else if (predecessor == null) {
+                // System.out.println("second if ");
+                listOfNeighbours.add(b);
+            // } else if (predecessor.getBoard().equals(b)){
+            //     // System.out.println("board already used before");
             }
         }
-        Board bestBoard = centerBoard;
-        int currentPriority = (centerBoard.manhattan());
 
-        for (int i = 0; i < neighbours.length; i++) {
-            Board board = neighbours[i];
-            if (board != null){
-            int priority = board.manhattan();
-            if (priority < currentPriority) {
-                bestBoard = board;
-                currentPriority = priority;
-            }
-            }
+        Board[] neighbours = new Board[listOfNeighbours.size()];
+        // System.out.println("is neighbours created? " + neighbours.length);
+        for (int i = 0; i < listOfNeighbours.size(); i++) {
+            neighbours[i] = listOfNeighbours.get(i);
+            // System.out.println("are indexes aded? " + neighbours[i]);
         }
+        // int[] sortedPriorities = new int[neighbours.length];
+        sort(neighbours);
+        // System.out.println("prioritis are sorted? " + sortedPriorities[0] + sortedPriorities[1] + sortedPriorities[2]);
+        Board bestBoard = neighbours[0];
+        // System.out.println("best board " + neighbours[0]);
+        // int currentPriority = (centerBoard.manhattan() * 2);
+
+        // for (int i = 0; i < neighbours.length - 1; i++) {
+        //     Board board = neighbours[i];
+        //     Board nextboard = neighbours[i + 1];
+        //     if (board.manhattan() < nextboard.manhattan()) {
+        //         bestBoard = board;
+        //         currentPriority = board.manhattan();
+        // } if (board.manhattan() == nextboard.manhattan() && board.){
+        //
+        // }
+
+        // if (board != null && !usedBoards.contains(board)){
+        // if (board != null) {
+        // int priority = board.manhattan();
+        // if (priority > currentPriority) {
+        // System.out.println("inside priority loop");
+        // bestBoard = board;
+        // usedBoards.add(bestBoard);
+        // currentPriority = priority;
+        // } else if (priority == currentPriority) {
+
+        // }
+
+        // }
+
         moves++;
         // System.out.println("current node moves: " + currentNode.getMoves());
         Node bestNode = new Node(bestBoard, moves, currentNode);
+
+        // System.out.println("Current priority " + currentPriority);
         return bestNode;
     }
 
+
     // is the initial board solvable? (see below)
-    public boolean isSolvable(){
+    public boolean isSolvable() {
+        // System.out.println("Metoda is solvable " + solvable);
         return solvable;
     }
 
     // min number of moves to solve initial board; -1 if unsolvable
-    public int moves(){
-        if(isSolvable()) {
+    public int moves() {
+        if (isSolvable()) {
             return minMoves;
         } else {
             return -1;
@@ -309,22 +359,22 @@ public class Solver {
     }
 
     // sequence of boards in the shortest solution; null if unsolvable
-    public Iterable<Board> solution(){
-        Queue<Board> boards = new Queue<>();
+    public Iterable<Board> solution() {
+        Stack<Board> boards = new Stack<>();
         Node minNode = this.minNode;
-        if(this.isSolvable()) {
+        if (this.isSolvable()) {
             while (minNode.getPredecessor() != null) {
-                boards.enqueue(minNode.getBoard());
+                boards.push(minNode.getBoard());
                 minNode = minNode.getPredecessor();
             }
-            boards.enqueue(minNode.getBoard());
+            boards.push(minNode.getBoard());
             return boards;
         } else {
             return null;
         }
     }
 
-    private class Node implements Comparable<Node>{
+    private class Node implements Comparable<Node> {
         private Board board;
         private Node parent;
         private Node smaller;
@@ -459,6 +509,37 @@ public class Solver {
         //             || getLarger() != null && getLarger().equals(other);
         // }
     }
+
+    private static void exch(Board[] a, int i, int j) {
+        {
+            Board swap = a[i];
+            a[i] = a[j];
+            a[j] = swap;
+        }
+    }
+
+    private void sort(Board[] neighbours) {
+        for (int i = 0; i < neighbours.length - 1; i++) {
+            // System.out.println("co z tymi tabelami? " + neighbours[i] + "\n pirority " + neighbours[i].manhattan());
+            // System.out.println("priorities: \n i: " + neighbours[i].manhattan() + "j: " + neighbours[j].manhattan());
+            int j = i + 1;
+            while (j > 0) {
+                int priorI = neighbours[j - 1].manhattan();
+                int priorJ = neighbours[j].manhattan();
+                if (priorJ < priorI) {
+                    exch(neighbours, j, j - 1);
+                } else {
+                    break;
+                }
+                j--;
+            }
+        }
+    }
+
+
+
+
+
 
  /*   Corner cases.
 
