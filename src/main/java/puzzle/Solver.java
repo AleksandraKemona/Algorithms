@@ -6,9 +6,10 @@ import edu.princeton.cs.algs4.MinPQ;
 // import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+// import java.util.Arrays;
 
 
 public class Solver {
@@ -64,11 +65,11 @@ public class Solver {
     // run the A* algorithm on two puzzle instances—one with the initial board and one with the initial
     // board modified by swapping a pair of tiles—in lockstep (alternating back and forth between exploring
     // search nodes in each of the two game trees). Exactly one of the two will lead to the goal board.
-    private Board board;
+    // private Board board;
     private boolean solvable;
 
     private boolean solved = false;
-    // private ArrayList<Board> usedBoards = new ArrayList<>();
+    private boolean twinSolved = false;
 
 
     // private boolean solvable;
@@ -84,7 +85,7 @@ public class Solver {
         }
 
         int moves = 0;
-        // int twinMoves = 0;
+        int twinMoves = 0;
 
         MinPQ<Node> nodes = new MinPQ<>();
         // MinPQ<Node> twinNodes = new MinPQ<>();
@@ -92,43 +93,28 @@ public class Solver {
         Node searchNode = new Node(initial);
         nodes.insert(searchNode);
 
-        // Node twinSearchNode = new Node(initial.twin());
+        // Node twinSearchNode = new Node(searchNode.getBoard().twin());
         // twinNodes.insert(twinSearchNode);
 
 
         Node removedNode;
-        Node removedTwinNode;
+        // Node removedTwinNode;
 
-        while (!solved && (moves < (initial.dimension() * initial.dimension() * initial.dimension() * initial.dimension() + 2))) {
-            // System.out.println("moves " + moves);
+        // while (!solved && !twinSolved) {
+            while (!solved) {
+
             removedNode = nodes.delMin();
-            Board currentBoard = removedNode.getBoard();
-            // while (!(moves > currentBoard.dimension() * currentBoard.dimension())) {
-            //     currentBoard = removedNode.getBoard().twin();
-            //     System.out.println("current twin \n" + currentBoard);
-            //     solvable = false;
-            //     moves = 0;
-            // }
-
-
             // removedTwinNode = twinNodes.delMin();
-            // Node twinPredecessor = removedTwinNode.getPredecessor();
 
+            Board currentBoard = removedNode.getBoard();
             // Board currentTwinBoard = removedTwinNode.getBoard();
 
-            // System.out.println(" Twin board: " + currentTwinBoard);
 
-            if (currentBoard.isGoal()) {
-                solved = true;
-            }
-
-            // if (currentTwinBoard.isGoal()){
-            //     twinSolved = true;
-            // }
+            if (currentBoard.isGoal()) solved = true;
+            // if (currentTwinBoard.isGoal()) twinSolved = true;
 
             Node neighbourNode = getNeighbour(removedNode);
             nodes.insert(neighbourNode);
-
 
             // Node twinNeighbourNode = getNeighbour(removedTwinNode);
             // twinNodes.insert(twinNeighbourNode);
@@ -136,25 +122,30 @@ public class Solver {
 
             moves = removedNode.getMoves() + 1;
 
-            // twinMoves = removedTwinNode.getMoves() +1;
-            minNode = removedNode;
-            // System.out.println("Moves " + moves);
-            // System.out.println("twin is goal ?" + currentTwinBoard.isGoal());
-            // if (moves > (currentBoard.dimension() * currentBoard.dimension() * 3)){
-            //     solvable = false;
-            //     break;
-            // } else {
-
-            // }
-            if (moves == (currentBoard.dimension() * currentBoard.dimension() * currentBoard.dimension() * currentBoard.dimension())) {
-                solved = false;
+            int n = initial.dimension();
+            int movesLimit = StdRandom.uniformInt((n * n * n), (n * n * n + 4));
+            if (moves >= movesLimit) {
+                while (!twinSolved) {
+                    MinPQ<Node> twinNodes = new MinPQ<>();
+                    Node twinSearchNode = new Node(removedNode.getBoard().twin());
+                    twinNodes.insert(twinSearchNode);
+                    Node removedTwinNode;
+                    removedTwinNode = twinNodes.delMin();
+                    Board currentTwinBoard = removedTwinNode.getBoard();
+                    if (currentTwinBoard.isGoal()) twinSolved = true;
+                    Node twinNeighbourNode = getNeighbour(removedTwinNode);
+                    twinNodes.insert(twinNeighbourNode);
+                    twinMoves = removedTwinNode.getMoves() + 1;
+                    if (twinMoves >= movesLimit){
+                        twinSolved = true;
+                    }
+                }
+                solved = true;
             }
-
-
+            minNode = removedNode;
         }
 
-        // System.out.println("Is it solvable? " + solvable);
-        solvable = solved;
+        solvable = !twinSolved;
         minMoves = moves - 1;
     }
 
@@ -290,8 +281,8 @@ public class Solver {
             } else if (predecessor == null) {
                 // System.out.println("second if ");
                 listOfNeighbours.add(b);
-            // } else if (predecessor.getBoard().equals(b)){
-            //     // System.out.println("board already used before");
+                // } else if (predecessor.getBoard().equals(b)){
+                //     // System.out.println("board already used before");
             }
         }
 

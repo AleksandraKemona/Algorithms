@@ -1,6 +1,8 @@
 // package puzzle;
 
 import edu.princeton.cs.algs4.Queue;
+import edu.princeton.cs.algs4.StdRandom;
+
 import java.util.ArrayList;
 
 
@@ -95,10 +97,15 @@ public class Board {
 
     // is this board the goal board?
     public boolean isGoal() {
+        if(boardArray.get(n * n -1) != 0){
+            return false;
+        } else {
+
         // return hamming() == 0;
-        for (int i = 0; i < n*n - 1; i++) {
+        for (int i = 0; i < n*n - 2; i++) {
             if (boardArray.get(i) != (i + 1)) {
                return false;
+            }
             }
         }
         return true;
@@ -146,8 +153,8 @@ public class Board {
                 int[][] neighbour = copyArray(startingArray);
                 neighbour[row][col] = startingArray[newRow][newCol];
                 neighbour[newRow][newCol] = 0;
-                ArrayList<Integer> oneNeighbour0 = arrayToArrayList(neighbour);
-                neighbors.enqueue(new Board(arrayListToArray(oneNeighbour0)));
+                ArrayList<Integer> oneNeighbour = arrayToArrayList(neighbour);
+                neighbors.enqueue(new Board(arrayListToArray(oneNeighbour)));
             }
         }
         return neighbors;
@@ -155,42 +162,89 @@ public class Board {
 
 
     // a board that is obtained by exchanging any pair of tiles
+    // public Board twin() {
+    //     int[][] startingArray = arrayListToArray(boardArray);
+    //     ArrayList<Integer> startingList = arrayToArrayList(startingArray);
+    //     Board twinBoard = new Board(copyArray(startingArray));
+    //     // ArrayList<Board> twinBoards = new ArrayList<>();
+    //
+    //     int[] twinArray = new int[startingList.size()];
+    //     for (int i = 0; i < startingList.size(); i++){
+    //         twinArray[i] = startingList.get(i);
+    //     }
+    //
+    //     for (int i = 0; i < startingList.size(); i++){
+    //
+    //         if (twinArray[i] !=0){
+    //             int col = i % n;
+    //             int row = i / n;
+    //             int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
+    //             for (int[] move: moves) {
+    //                 int newCol = col+move[0];
+    //                 int newRow = row+move[1];
+    //                 if(isInRange(newRow, newCol)){
+    //                     int[][] testBoard = copyArray(startingArray);
+    //                     if (testBoard[newRow][newCol] !=0 ){
+    //                         int temp = testBoard[row][col];
+    //                         testBoard[row][col] = testBoard[newRow][newCol];
+    //                         testBoard[newRow][newCol] = temp;
+    //                         twinBoard = new Board(testBoard);
+    //                         // twinBoards.add(twinBoard);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     // int randomIndex = StdRandom.uniformInt(0, twinBoards.size() - 1);
+    //     return twinBoard;
+    // }
     public Board twin() {
         int[][] startingArray = arrayListToArray(boardArray);
-        ArrayList<Integer> startingList = arrayToArrayList(startingArray);
-        Board twinBoard = new Board(copyArray(startingArray));
+        int[][] twinArray = copyArray(startingArray);
 
-        int[] twinArray = new int[startingList.size()];
-        for (int i = 0; i < startingList.size(); i++){
-            twinArray[i] = startingList.get(i);
+        int row = 0;
+        int col = 0;
+
+        if (startingArray[col][row] == 0 || startingArray[col+1][row] == 0){
+            row++;
         }
+        twinArray[col][row] = startingArray[col+1][row];
+        twinArray[col+1][row]  = startingArray[col][row];
+        Board twinBoard = new Board(twinArray);
 
-        for (int i = 0; i < startingList.size(); i++){
 
-            if (twinArray[i] !=0){
-                int col = i % n;
-                int row = i / n;
-                int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
-                for (int[] move: moves) {
-                    int newCol = col+move[0];
-                    int newRow = row+move[1];
-                    if(isInRange(newRow, newCol)){
-                        int[][] testBoard = copyArray(startingArray);
-                        if (testBoard[newRow][newCol] !=0 ){
-                            int temp = testBoard[row][col];
-                            testBoard[row][col] = testBoard[newRow][newCol];
-                            testBoard[newRow][newCol] = temp;
-                            twinBoard = new Board(testBoard);
-                        }
-                    }
-                }
-            }
-        }
+
+
+        // int[] twinArray = new int[startingList.size()];
+        // for (int i = 0; i < startingList.size(); i++){
+        //     twinArray[i] = startingList.get(i);
+        // }
+        //
+        // for (int i = 0; i < startingList.size(); i++){
+        //
+        //     if (twinArray[i] !=0){
+        //         int col = i % n;
+        //         int row = i / n;
+        //         int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
+        //         for (int[] move: moves) {
+        //             int newCol = col+move[0];
+        //             int newRow = row+move[1];
+        //             if(isInRange(newRow, newCol)){
+        //                 int[][] testBoard = copyArray(startingArray);
+        //                 if (testBoard[newRow][newCol] !=0 ){
+        //                     int temp = testBoard[row][col];
+        //                     testBoard[row][col] = testBoard[newRow][newCol];
+        //                     testBoard[newRow][newCol] = temp;
+        //                     twinBoard = new Board(testBoard);
+        //                     // twinBoards.add(twinBoard);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        // int randomIndex = StdRandom.uniformInt(0, twinBoards.size() - 1);
         return twinBoard;
-
-
     }
-
     private ArrayList<Integer> arrayToArrayList(int[][] tiles) {
         ArrayList<Integer> listOfTiles = new ArrayList<>();
         for (int i = 0; i < n; i++){
