@@ -1,67 +1,48 @@
 // package puzzle;
 
 import edu.princeton.cs.algs4.Queue;
-import edu.princeton.cs.algs4.StdRandom;
-
-import java.util.ArrayList;
-
-
+import java.util.Arrays;
 public class Board {
 
     private int n;
-
-    private Board board;
-    private ArrayList<Integer> boardArray;
-    private ArrayList<Integer> goalArray;
-
+    private char[] goalArray;
+    private char[] board1D;
+    private int length1D;
 
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
-
-    // Constructor.  You may assume that the constructor receives an n-by-n array
-    // containing the n2 integers between 0 and n2 − 1, where 0 represents the blank square.
-    // You may also assume that 2 ≤ n < 128.
     public Board(int[][] tiles) {
         this.n = tiles.length;
-        this.boardArray = arrayToArrayList(tiles);
+        // this.boardArray = arrayToArrayList(tiles);
+        board1D = changeTo1dim(tiles);
+        length1D = n * n;
     }
 
     // string representation of this board
-    // String representation.  The toString() method returns a string composed of n + 1 lines.
-    // The first line contains the board size n; the remaining n lines contains
-    // the n-by-n grid of tiles in row-major order, using 0 to designate the blank square.
-    public String toString(){
+    public String toString() {
         StringBuilder boardBuilder = new StringBuilder();
-        boardBuilder.append( n + "\n");
+        boardBuilder.append(n + "\n");
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                    boardBuilder.append(" " + boardArray.get(i * n + j) + " ");
-                }
-                boardBuilder.append("\n");
+                int element = board1D[i * n + j];
+                boardBuilder.append(" " + element + " ");
             }
+            boardBuilder.append("\n");
+        }
         return boardBuilder.toString();
     }
-
-
-
-
 
     // board dimension n
     public int dimension() {
         return n;
     }
 
-    // number of tiles out of place
-    // Hamming and Manhattan distances.
-    // To measure how close a board is to the goal board, we define two notions of distance.
-    // The Hamming distance betweeen a board and the goal board is the number of tiles in the wrong position.
-    // The Manhattan distance between a board and the goal board is the sum of
-    // the Manhattan distances (sum of the vertical and horizontal distance) from the tiles to their goal positions.
+    // number of tiles out of place Hamming distance
     public int hamming() {
         int wrongTilesNumber = 0;
-        for (int i = 0; i < n*n; i++) {
-            if (boardArray.get(i) != (i + 1) && boardArray.get(i) != 0) {
-                    wrongTilesNumber++;
+        for (int i = 0; i < n * n; i++) {
+            if (board1D[i] != (i + 1) && board1D[i] != 0) {
+                wrongTilesNumber++;
             }
         }
         return wrongTilesNumber;
@@ -70,225 +51,138 @@ public class Board {
     // sum of Manhattan distances between tiles and goal
     public int manhattan() {
         int counter = 0;
-        for (int i = 1; i < n*n; i++) {
-            int boardIndex = boardArray.indexOf(i);
-            int boardX = boardIndex % n;
-            int boardY = boardIndex / n;
-            createGoalBoard();
-            int goalIndex = goalArray.indexOf(i);
-            int goalX = goalIndex % n;
-            int goalY = goalIndex / n;
+        createGoalBoard();
+        for (int i = 1; i < length1D; i++) {
+            int boardIndex = searchIndex(board1D, i);
+            int goalIndex = searchIndex(goalArray, i);
+
             if (boardIndex != goalIndex) {
-                int horizDist = Math.abs(boardX - goalX);
-                int vertDist = Math.abs(boardY - goalY);
+                int dist = Math.abs(goalIndex - boardIndex);
+                int horizDist = 0;
+                int vertDist = Math.abs((boardIndex / n) - (goalIndex / n));
+                horizDist = Math.abs(dist - n * (vertDist));
                 counter = counter + vertDist + horizDist;
             }
         }
         return counter;
     }
 
-    private void createGoalBoard() {
-        goalArray = new ArrayList<>();
-        for (int i = 0; i < (n*n); i++) {
-            goalArray.add(i, i+1);
-        }
-        goalArray.set((n*n-1), 0);
-    }
-
     // is this board the goal board?
     public boolean isGoal() {
-        if(boardArray.get(n * n -1) != 0){
+        if (board1D[length1D - 1] != 0) {
             return false;
         } else {
-
-        // return hamming() == 0;
-        for (int i = 0; i < n*n - 2; i++) {
-            if (boardArray.get(i) != (i + 1)) {
-               return false;
-            }
+            for (int i = 0; i < n * n - 2; i++) {
+                if (board1D[i] != (i + 1)) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
-
-
-
-    // Comparing two boards for equality.  Two boards are equal if they are have the same size and their
-    // corresponding tiles are in the same positions. The equals() method is inherited from java.lang.Object,
-    // so it must obey all of Java’s requirements.
     // does this board equal y?
-    public boolean equals(Object y){
-       if (y == this) return true;
-       if (y == null) return false;
+    public boolean equals(Object y) {
+        if (y == this) return true;
+        if (y == null) return false;
         if (y.getClass() != this.getClass()) return false;
         Board that = (Board) y;
         if (that.dimension() != this.dimension())
             return false;
-        for (int i = 0; i < boardArray.size(); i ++) {
-            if (this.boardArray.get(i) != that.boardArray.get(i))
+        for (int i = 0; i < board1D.length; i++) {
+            if (this.board1D[i] != that.board1D[i])
                 return false;
         }
         return true;
     }
 
-    // Neighboring boards.  The neighbors()
-    // method returns an iterable containing the neighbors of the board.
-    // Depending on the location of the blank square, a board can have 2, 3, or 4 neighbors.
     // all neighboring boards
-    public Iterable<Board> neighbors(){
-        Queue<Board> neighbors = new Queue<>();
-        int[][] startingArray = arrayListToArray(boardArray);
-        final ArrayList<Integer> firstBoard = arrayToArrayList(startingArray);
+    public Iterable<Board> neighbors() {
+        Queue<Board> neighbours = new Queue<>();
+        char[] startingArray = Arrays.copyOf(board1D, length1D);
 
-        int blankPlate = firstBoard.indexOf(0);
-        int col = blankPlate % n;
-        int row = blankPlate / n;
-
-        int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
-        for (int[] move: moves) {
-            int newCol = col + move[0];
-            int newRow = row + move[1];
-            if (isInRange(newRow, newCol)) {
-                int[][] neighbour = copyArray(startingArray);
-                neighbour[row][col] = startingArray[newRow][newCol];
-                neighbour[newRow][newCol] = 0;
-                ArrayList<Integer> oneNeighbour = arrayToArrayList(neighbour);
-                neighbors.enqueue(new Board(arrayListToArray(oneNeighbour)));
+        int blankIndex = searchIndex(startingArray, 0);
+        int[] moves = {1, -1, n, -n};
+        for (int move: moves) {
+            int newIndex = blankIndex + move;
+            if (checkBoundaries(newIndex, move)) {
+                char[] neighbour = Arrays.copyOf(startingArray, length1D);
+                neighbour[blankIndex] = startingArray[newIndex];
+                neighbour[newIndex] = 0;
+                neighbours.enqueue(new Board(changeTo2dim(neighbour)));
             }
         }
-        return neighbors;
+        return neighbours;
     }
-
 
     // a board that is obtained by exchanging any pair of tiles
-    // public Board twin() {
-    //     int[][] startingArray = arrayListToArray(boardArray);
-    //     ArrayList<Integer> startingList = arrayToArrayList(startingArray);
-    //     Board twinBoard = new Board(copyArray(startingArray));
-    //     // ArrayList<Board> twinBoards = new ArrayList<>();
-    //
-    //     int[] twinArray = new int[startingList.size()];
-    //     for (int i = 0; i < startingList.size(); i++){
-    //         twinArray[i] = startingList.get(i);
-    //     }
-    //
-    //     for (int i = 0; i < startingList.size(); i++){
-    //
-    //         if (twinArray[i] !=0){
-    //             int col = i % n;
-    //             int row = i / n;
-    //             int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
-    //             for (int[] move: moves) {
-    //                 int newCol = col+move[0];
-    //                 int newRow = row+move[1];
-    //                 if(isInRange(newRow, newCol)){
-    //                     int[][] testBoard = copyArray(startingArray);
-    //                     if (testBoard[newRow][newCol] !=0 ){
-    //                         int temp = testBoard[row][col];
-    //                         testBoard[row][col] = testBoard[newRow][newCol];
-    //                         testBoard[newRow][newCol] = temp;
-    //                         twinBoard = new Board(testBoard);
-    //                         // twinBoards.add(twinBoard);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     // int randomIndex = StdRandom.uniformInt(0, twinBoards.size() - 1);
-    //     return twinBoard;
-    // }
     public Board twin() {
-        int[][] startingArray = arrayListToArray(boardArray);
-        int[][] twinArray = copyArray(startingArray);
-
-        int row = 0;
-        int col = 0;
-
-        if (startingArray[col][row] == 0 || startingArray[col+1][row] == 0){
-            row++;
+        char[] startingArray = Arrays.copyOf(board1D, length1D);
+        char[] twinArray = Arrays.copyOf(startingArray, length1D);
+        int index = 0;
+        if (startingArray[index] == 0 || startingArray[index + 1] == 0) {
+            index = index + n;
         }
-        twinArray[col][row] = startingArray[col+1][row];
-        twinArray[col+1][row]  = startingArray[col][row];
-        Board twinBoard = new Board(twinArray);
-
-
-
-
-        // int[] twinArray = new int[startingList.size()];
-        // for (int i = 0; i < startingList.size(); i++){
-        //     twinArray[i] = startingList.get(i);
-        // }
-        //
-        // for (int i = 0; i < startingList.size(); i++){
-        //
-        //     if (twinArray[i] !=0){
-        //         int col = i % n;
-        //         int row = i / n;
-        //         int[][] moves = {{0,1}, {0, -1}, {1, 0}, {-1, 0}};
-        //         for (int[] move: moves) {
-        //             int newCol = col+move[0];
-        //             int newRow = row+move[1];
-        //             if(isInRange(newRow, newCol)){
-        //                 int[][] testBoard = copyArray(startingArray);
-        //                 if (testBoard[newRow][newCol] !=0 ){
-        //                     int temp = testBoard[row][col];
-        //                     testBoard[row][col] = testBoard[newRow][newCol];
-        //                     testBoard[newRow][newCol] = temp;
-        //                     twinBoard = new Board(testBoard);
-        //                     // twinBoards.add(twinBoard);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        // int randomIndex = StdRandom.uniformInt(0, twinBoards.size() - 1);
-        return twinBoard;
-    }
-    private ArrayList<Integer> arrayToArrayList(int[][] tiles) {
-        ArrayList<Integer> listOfTiles = new ArrayList<>();
-        for (int i = 0; i < n; i++){
-            for (int j = 0; j < n; j++){
-                listOfTiles.add(tiles[i][j]);
-            }
-        }
-        return listOfTiles;
+        twinArray[index] = startingArray[index + 1];
+        twinArray[index + 1] = startingArray[index];
+        return new Board(changeTo2dim(twinArray));
     }
 
-    private int[][] arrayListToArray (ArrayList<Integer> list) {
-        int[][] arrayOfTiles = new int[n][n];
-        for (int i = 0; i < (n*n); i++){
-            int row = i / n;
-            int col = i % n;
-            arrayOfTiles[row][col] = list.get(i);
+    // Helper methods
+    private int searchIndex(char[] elementsArray, int element) {
+        int counter = 0;
+        while (elementsArray[counter] != element) {
+            counter++;
         }
-        return arrayOfTiles;
+        return counter;
     }
-
-    private  int[][]copyArray(int[][] oldArray) {
-        int[][] newArray = new int[n][n];
+    private void createGoalBoard() {
+        goalArray = new char[length1D];
+        for (int i = 0; i < (length1D); i++) {
+            goalArray[i] = (char) (i+1);
+        }
+        goalArray[length1D - 1] = 0;
+    }
+    private boolean checkBoundaries(int index, int move) {
+        if (move == 1 && (index % n) < (n) && (index % n) != 0) return true;
+        if (move == -1 && (index % n) >= 0 && (index % n) != n-1) return true;
+        if (move == n && index < length1D) return true;
+        return move == -n && index >= 0;
+    }
+    private char[] changeTo1dim(int[][] array2D) {
+        char[] array1D = new char[n * n];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                newArray[i][j] = oldArray[i][j];
+                array1D[i * n + j] = (char) array2D[i][j];
             }
         }
-        return newArray;
+        return array1D;
     }
-    private boolean isInRange(int col, int row){
-        return (col >=0 && col <n && row >=0 && row <n);
+
+    private int[][] changeTo2dim(char[] array1D) {
+        int[][] array2D = new int[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                array2D[i][j] = array1D[i * n + j];
+            }
+        }
+        return array2D;
     }
 
     // unit testing (not graded)
     // public static void main(String[] args){
-    //     String grid = StdIn.readString();
-    //     int sizeOfBoard = grid.charAt(0);
+    //
+    //     int sizeOfBoard = 3;
     //     int[][] points = new int[sizeOfBoard][sizeOfBoard];
-    //     for (int i = 0; i < sizeOfBoard; i++){
-    //         String oneLine = StdIn.readString();
-    //         for (int j = 0; j < sizeOfBoard; j++){
-    //             points[i][j] = oneLine.charAt(j);
-    //         }
-    //     }
+    //     points[0][0] = 0;
+    //     points[0][1] = 1;
+    //     points[0][2] = 3;
+    //     points[1][0] = 4;
+    //     points[1][1] = 2;
+    //     points[1][2] = 5;
+    //     points[2][0] = 7;
+    //     points[2][1] = 8;
+    //     points[2][2] = 6;
     //     new Board(points);
     // }
 }

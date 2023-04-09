@@ -1,4 +1,4 @@
-package puzzle;
+// package puzzle;
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
@@ -56,11 +56,12 @@ public class Solver {
     }
 
     private class Node implements Comparable<Node> {
+
+        int man;
         private Board board;
         private Node predecessor;
         private int moves;
         private int priority;
-        int man;
 
         public Node(Board initial) {
             this.board = initial;
